@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import router from './router'
 import axios from 'axios'
-
+import '../css/app.css'
 // Configure axios
 axios.defaults.withCredentials = true
 
