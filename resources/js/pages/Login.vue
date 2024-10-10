@@ -96,47 +96,6 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import axios from "axios";
-
-const router = useRouter();
-const email = ref("");
-const password = ref("");
-const error = ref("");
-const isLoading = ref(false);
-
-const login = async () => {
-    error.value = "";
-    isLoading.value = true;
-
-    try {
-        // Get CSRF cookie
-        await axios.get("/sanctum/csrf-cookie");
-
-        // Attempt login
-        await axios.post("/login", {
-            email: email.value,
-            password: password.value,
-        });
-
-        // If successful, redirect to dashboard
-        router.push({ name: "Dashboard" });
-    } catch (e) {
-        if (e.response && e.response.data && e.response.data.errors) {
-            // Handle validation errors
-            error.value = Object.values(e.response.data.errors)
-                .flat()
-                .join(" ");
-        } else if (e.response && e.response.data && e.response.data.message) {
-            // Handle other API errors
-            error.value = e.response.data.message;
-        } else {
-            // Handle unexpected errors
-            error.value = "An unexpected error occurred. Please try again.";
-        }
-    } finally {
-        isLoading.value = false;
-    }
-};
+import { useAuth } from '@/composables/auth'
+const { email, password, error, isLoading, login } = useAuth()
 </script>

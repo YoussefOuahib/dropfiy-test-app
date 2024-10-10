@@ -1,53 +1,46 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import axios from 'axios'
-
-// Import your Vue components
-import Login from '../pages/Login.vue'
-import Dashboard from '../pages/Dashboard.vue'
-
-
+import { createRouter, createWebHistory } from 'vue-router';
+import { useAuth } from '../composables/auth.js';
+import AuthenticatedLayout from '../layouts/AuthenticatedLayout.vue';
+import Dashboard from '../pages/Dashboard.vue';
+import Login from '../pages/Login.vue';
 
 const routes = [
-    { 
-        path: '/', 
-        redirect: { name: 'Login' } 
-    },
-    { 
-        path: '/login', 
-        component: Login, 
-        name: 'Login' 
-    },
-    // { 
-    //     path: '/register', 
-    //     component: Register, 
-    //     name: 'Register' 
-    // },
-    { 
-        path: '/dashboard', 
-        component: Dashboard, 
-        name: 'Dashboard', 
-        meta: { requiresAuth: true } 
-    },
-]
+  {
+    path: '/',
+    component: AuthenticatedLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: Dashboard,
+      },
+    ]
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
+];
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes,
-})
+  history: createWebHistory(),
+  routes
+});
 
-router.beforeEach(async (to, from, next) => {
-    if (to.meta.requiresAuth) {
-        try {
-            // Check if user is authenticated
-            await axios.get('/api/user')
-            next()
-        } catch (error) {
-            // If not authenticated, redirect to login
-            next({ name: 'Login' })
-        }
+const { isAuthenticated } = useAuth();
+
+router.beforeEach((to, from, next) => {
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isAuthenticated.value) {
+      next({ name: 'Login' });
     } else {
-        next()
+      next();
     }
-})
+  } else {
+    next();
+  }
+});
 
-export default router
+export default router;
