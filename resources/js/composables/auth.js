@@ -58,11 +58,29 @@ export const useAuth = () => {
         }
     }
 
+    const checkAuthStatus = async () => {
+        try {
+            const response = await axios.get('/api/user')
+            if (response.status === 200) {
+                setAuthStatus(true)
+                return true
+            }
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                setAuthStatus(false)
+            } else {
+                console.error('Error checking auth status:', error)
+            }
+        }
+        return false
+    }
+
     return {
         isAuthenticated: readonly(isAuthenticated),
         login,
         email,
         password,
-        logout
+        logout,
+        checkAuthStatus
     }
 }

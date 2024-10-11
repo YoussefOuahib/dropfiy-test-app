@@ -103,14 +103,14 @@
         </div>
       </div>
     </nav>
-
+<!-- 
     <header class="bg-white shadow">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ currentPageTitle }}</h1>
       </div>
-    </header>
+    </header> -->
     <main>
-      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div class="mx-auto">
         <router-view></router-view>
       </div>
     </main>
@@ -121,11 +121,17 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuth } from '../composables/auth';
+import { onMounted } from 'vue'
 
 const router = useRouter();
 const route = useRoute();
-const { logout } = useAuth();
-
+const { checkAuthStatus, logout } = useAuth()
+onMounted(async () => {
+  const isLoggedIn = await checkAuthStatus()
+  if (!isLoggedIn) {
+    router.push('/login')
+  }
+})
 const isProfileMenuOpen = ref(false);
 const isMobileMenuOpen = ref(false);
 
