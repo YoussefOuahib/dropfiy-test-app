@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FeedStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,34 +12,40 @@ class Feed extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'last_synced_at', 'last_submitted_at'];
+    protected $fillable = ['name', 'last_synced_at', 'status'];
     
     protected $casts = [
-        'last_submitted_at' => 'datetime',
         'last_synced_at' => 'datetime',
+        'status' => FeedStatus::class,
+
     ];
 
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);
     }
-
-    public function scopeNeedsSubmission($query)
+    public function isPending(): bool
     {
-        $submissionThreshold = config('google_merchant.submission_threshold', 24);
-        return $query->where(function($q) use ($submissionThreshold) {
-            $q->whereNull('last_submitted_at')
-              ->orWhere('last_submitted_at', '<=', now()->subHours($submissionThreshold));
-        });
+        return $this->status === FeedStatus::Pending;
     }
 
-    public function markAsSubmitted(): void
+    public function isSynced(): bool
     {
-        $this->update(['last_submitted_at' => now()]);
+        return $this->status === FeedStatus::Synced;
     }
 
+    public function hasFailed(): bool
+    {
+        return $this->status === FeedStatus::Failed;
+    }
+    
     public function markAsSynced(): void
     {
-        $this->update(['last_synced_at' => now()]);
+        $this->update(['last_synced_at' => Carbon::now(),'status' => FeedStatus::Synced]);
+    }
+
+    public function markAsFailed(): void
+    {
+        $this->update(['status' => FeedStatus::Failed]);
     }
 }
