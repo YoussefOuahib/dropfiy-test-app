@@ -5,12 +5,14 @@ export function useFeeds() {
   const feeds = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const reportData = ref(null)
 
   const fetchFeeds = async () => {
     loading.value = true
     try {
       const response = await axios.get('/api/feeds')
       feeds.value = response.data.data
+      
     } catch (e) {
       error.value = 'Failed to fetch feeds'
       console.error(e)
@@ -70,7 +72,7 @@ export function useFeeds() {
       
       if (response.data.success) {
         // Update the local state with the returned feed data
-        const updatedFeed = response.data.feed
+        getFeedWithProducts(feedId);
         const feedIndex = feeds.value.findIndex(feed => feed.id === feedId)
         if (feedIndex !== -1) {
           feeds.value[feedIndex] = updatedFeed
@@ -90,6 +92,21 @@ export function useFeeds() {
     }
   }
 
+  const fetchReportData = async () => {
+    loading.value = true
+    try {
+      const response = await axios.get('/api/feeds-report');
+      console.log('hello report');
+      reportData.value = response.data
+      console.log(response.data);
+    } catch (e) {
+      error.value = 'Failed to fetch report data'
+      console.error(e)
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     detachProduct,
     addFeed,
@@ -99,6 +116,8 @@ export function useFeeds() {
     fetchFeeds,
     syncFeed,
     deleteFeed,
-    getFeedWithProducts
+    getFeedWithProducts,
+    fetchReportData,
+    reportData,
   }
 }

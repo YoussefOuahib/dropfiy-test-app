@@ -21,15 +21,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // Feed resource routes
     Route::apiResource('feeds', FeedController::class);
 
-    //Product resource routes
-    Route::apiResource('products', ProductController::class);
-
+    //Custom Route for Data reporting 
+    Route::get('/feeds-report', [FeedController::class, 'getReport']);
     // Custom route for syncing and submitting a feed
     Route::post('feeds/{feed}/sync', [FeedController::class, 'sync'])
         ->name('feeds.sync');
-
     // Custom route for detaching a product
     Route::post('/feeds/{feed}/detach-product', [FeedController::class, 'detachProduct'])->name('feeds.detach-product');
+
+
+
+    //Product resource routes
+    Route::apiResource('products', ProductController::class);
+
+
 
 
 });

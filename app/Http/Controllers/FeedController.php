@@ -80,6 +80,11 @@ class FeedController extends Controller
             ], 422);
         }
     }
+    public function getReport(): JsonResponse
+    {
+        $reportData = $this->feedService->getReportData();
+        return response()->json($reportData);
+    }
 
 
     protected function respondWithFeed(Feed $feed, string $message): JsonResponse

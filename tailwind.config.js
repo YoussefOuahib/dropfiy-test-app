@@ -8,9 +8,13 @@ module.exports = {
   ],
 
   theme: {
-    extend: {
-    },
+    
   },
+  safelist: [
+    {
+      pattern: /^(bg|text|border|ring)-(sky|blue|cyan|red|green|yellow|purple|pink|indigo|gray)-(500|600)$/,
+    },
+  ],
 
   plugins: [require('@tailwindcss/forms')],
 };

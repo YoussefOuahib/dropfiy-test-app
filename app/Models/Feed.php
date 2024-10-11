@@ -7,19 +7,32 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class Feed extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'last_synced_at', 'status'];
-    
+    protected $fillable = ['name', 'slug' ,'last_synced_at', 'status'];
+
     protected $casts = [
         'last_synced_at' => 'datetime',
         'status' => FeedStatus::class,
 
     ];
+    protected static function boot()
+    {
+        parent::boot();
 
+        static::creating(function ($feed) {
+            $feed->slug = Str::slug($feed->name);
+        });
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);
@@ -38,10 +51,10 @@ class Feed extends Model
     {
         return $this->status === FeedStatus::Failed;
     }
-    
+
     public function markAsSynced(): void
     {
-        $this->update(['last_synced_at' => Carbon::now(),'status' => FeedStatus::Synced]);
+        $this->update(['last_synced_at' => Carbon::now(), 'status' => FeedStatus::Synced]);
     }
 
     public function markAsFailed(): void

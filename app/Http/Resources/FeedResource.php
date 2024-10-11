@@ -11,6 +11,7 @@ class FeedResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'slug' => $this->slug,
             'name' => $this->name,
             'products' => ProductResource::collection($this->whenLoaded('products')),
             'total_products' => $this->products()->count(),

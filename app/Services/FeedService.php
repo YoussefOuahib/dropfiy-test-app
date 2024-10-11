@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\FeedStatus;
 use App\Models\Feed;
 use App\Models\Product;
 use App\Exceptions\FeedSubmissionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -86,8 +88,8 @@ class FeedService
     public function needsSubmission(Feed $feed): bool
     {
         $submissionThreshold = config('google_merchant.submission_threshold', 24);
-        return $feed->last_submitted_at === null || 
-               $feed->last_submitted_at->lessThanOrEqualTo(now()->subHours($submissionThreshold));
+        return $feed->last_submitted_at === null ||
+            $feed->last_submitted_at->lessThanOrEqualTo(now()->subHours($submissionThreshold));
     }
     public function detachProduct(Feed $feed, int $productId): bool
     {
@@ -104,5 +106,23 @@ class FeedService
             return false;
         }
     }
-    
+
+    public function getReportData(): array
+    {
+        return [
+            'overall_stats' => $this->getOverallStats(),
+        ];
+    }
+
+    private function getOverallStats(): array
+    {
+        return [
+            'total_feeds' => Feed::count(),
+            'synced_feeds' => Feed::where('status', FeedStatus::Synced)->count(),
+            'pending_feeds' => Feed::where('status', FeedStatus::Pending)->count(),
+            'failed_feeds' => Feed::where('status', FeedStatus::Failed)->count(),
+            'total_products' => Feed::withCount('products')->get()->sum('products_count'),
+        ];
+    }
+
 }

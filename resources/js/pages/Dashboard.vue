@@ -1,10 +1,75 @@
 <template>
     <div class="p-6 bg-gradient-to-r from-cyan-50 to-sky-50">
+        <div class="flex justify-evenly" v-if="reportData">
+            <div>
+                <a
+                    href="#"
+                    class="block max-w-sm p-6 border border-gray-200 rounded-lg shadow hover:bg-sky-400 bg-gradient-to-r from-sky-600 to-cyan-600"
+                >
+                    <h2
+                        class="mb-2 font-medium text-xl tracking-tight text-center text-gray-100"
+                    >
+                        Total Feeds
+                    </h2>
+                    <p class="text-4xl font-extrabold text-center text-white">
+                        {{reportData.overall_stats.total_feeds ?? 'N/A'}}
+                    </p>
+                </a>
+            </div>
+            <div>
+                <a
+                    href="#"
+                    class="block max-w-sm p-6 border border-gray-200 rounded-lg shadow hover:bg-green-400 bg-gradient-to-r from-green-400 to-emerald-400"
+                >
+                    <h2
+                        class="mb-2 text-xl font-medium tracking-tight text-center text-gray-100"
+                    >
+                        Synced Feeds
+                    </h2>
+                    <p class="text-4xl font-extrabold text-center text-white">
+                        {{reportData.overall_stats.synced_feeds ?? 'N/A'}}
+
+                    </p>
+                </a>
+            </div>
+            <div>
+                <a
+                    href="#"
+                    class="block max-w-sm p-6 border border-gray-200 rounded-lg shadow hover:bg-rose-400 bg-gradient-to-r from-rose-400 to-red-400"
+                >
+                    <h2
+                        class="mb-2 text-xl font-medium tracking-tight text-center text-gray-100"
+                    >
+                        Failed Feeds
+                    </h2>
+                    <p class="text-4xl font-extrabold text-center text-white">
+                        {{reportData.overall_stats.failed_feeds ?? 'N/A'}}
+
+                    </p>
+                </a>
+            </div>
+            <div>
+                <a
+                    href="#"
+                    class="block max-w-sm p-6 border border-gray-200 rounded-lg shadow hover:bg-sky-400 bg-gradient-to-r from-sky-600 to-cyan-600"
+                >
+                    <h2
+                        class="mb-2 text-xl font-medium tracking-tight text-center text-gray-100"
+                    >
+                        Total Products
+                    </h2>
+                    <p class="text-4xl font-extrabold text-center text-white">
+                        {{reportData.overall_stats.total_products ?? 'N/A'}}
+
+                    </p>
+                </a>
+            </div>
+        </div>
         <div class="mb-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-sky-800">Feeds</h1>
             <OutlinedButton
                 text="Add Feed"
-                color="gray"
+                color="primary"
                 @click="openAddFeedDialog"
             />
         </div>
@@ -56,7 +121,7 @@
                 <tbody class="divide-y divide-gray-200">
                     <tr
                         v-for="feed in feeds"
-                        :key="feed.id"
+                        :key="feed.slug"
                         class="hover:bg-gray-50 transition-colors duration-200"
                     >
                         <th
@@ -100,16 +165,16 @@
                             <OutlinedButton
                                 text="Sync"
                                 color="cyan"
-                                @click="sync(feed.id)"
+                                @click="sync(feed.slug)"
                             />
 
                             <OutlinedButton
-                                @click="viewFeed(feed.id)"
+                                @click="viewFeed(feed.slug)"
                                 text="View"
                                 color="green"
                             />
                             <OutlinedButton
-                                @click="deleteFeed(feed.id)"
+                                @click="deleteFeed(feed.slug)"
                                 text="Delete"
                                 color="red"
                             />
@@ -196,14 +261,13 @@
                                         <OutlinedButton
                                             @click="
                                                 detachProduct(
-                                                    selectedFeed.id,
+                                                    selectedFeed.slug,
                                                     product.id
                                                 )
                                             "
                                             color="red"
                                             text="Detach"
                                         />
-                                            
                                     </td>
                                 </tr>
                             </tbody>
@@ -306,6 +370,8 @@ const {
     getFeedWithProducts,
     addFeed,
     detachProduct,
+    fetchReportData,
+    reportData,
 } = useFeeds();
 const { products, fetchProducts } = useProducts();
 const feedModal = ref(null);
@@ -313,6 +379,7 @@ const selectedFeed = ref(null);
 onMounted(() => {
     fetchFeeds();
     fetchProducts();
+    fetchReportData();
 });
 const addFeedDialog = ref(null);
 const newFeedName = ref("");
