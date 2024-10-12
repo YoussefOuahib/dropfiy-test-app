@@ -12,6 +12,8 @@ use App\Services\GoogleMerchantService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+
 
 class FeedController extends Controller
 {
@@ -26,41 +28,48 @@ class FeedController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        $feeds = Feed::orderBy('created_at', 'desc')->get();
+        Gate::authorize('viewAny', Feed::class);
+        $feeds = Feed::where('user_id', auth()->user()->id)->orderBy('created_at', 'desc')->get();
         return FeedResource::collection($feeds);
     }
-
+    
     public function show(Feed $feed): FeedResource
     {
+        Gate::authorize('view', $feed);
         return new FeedResource($feed->load('products'));
     }
-
+    
     public function store(CreateFeedRequest $request): JsonResponse
     {
+        Gate::authorize('create', Feed::class);
         $feed = $this->feedService->createFeed($request->validated());
         return $this->respondWithFeed($feed, 'Feed created successfully');
     }
-
+    
     public function update(UpdateFeedRequest $request, Feed $feed): JsonResponse
     {
+        Gate::authorize('update', $feed);
         $updatedFeed = $this->feedService->updateFeed($feed, $request->validated());
         return $this->respondWithFeed($updatedFeed, 'Feed updated successfully');
     }
-
+    
     public function destroy(Feed $feed): JsonResponse
     {
+        Gate::authorize('delete', $feed);
         $this->feedService->deleteFeed($feed);
         return response()->json(['message' => 'Feed deleted successfully']);
     }
-
+    
     public function sync(Feed $feed): JsonResponse
     {
+        Gate::authorize('sync', $feed);
         SyncFeedJob::dispatch($feed);
         return response()->json(['message' => 'Feed generation and submission job has been queued']);
     }
-
+    
     public function detachProduct(Request $request, Feed $feed): JsonResponse
     {
+        Gate::authorize('detachProduct', $feed);
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
         ]);
@@ -80,12 +89,13 @@ class FeedController extends Controller
             ], 422);
         }
     }
+    
     public function getReport(): JsonResponse
     {
+        Gate::authorize('viewReport', Feed::class);
         $reportData = $this->feedService->getReportData();
         return response()->json($reportData);
     }
-
 
     protected function respondWithFeed(Feed $feed, string $message): JsonResponse
     {

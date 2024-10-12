@@ -12,7 +12,7 @@
                         Total Feeds
                     </h2>
                     <p class="text-4xl font-extrabold text-center text-white">
-                        {{reportData.overall_stats.total_feeds ?? 'N/A'}}
+                        {{ reportData.overall_stats.total_feeds ?? "N/A" }}
                     </p>
                 </a>
             </div>
@@ -27,8 +27,7 @@
                         Synced Feeds
                     </h2>
                     <p class="text-4xl font-extrabold text-center text-white">
-                        {{reportData.overall_stats.synced_feeds ?? 'N/A'}}
-
+                        {{ reportData.overall_stats.synced_feeds ?? "N/A" }}
                     </p>
                 </a>
             </div>
@@ -43,8 +42,7 @@
                         Failed Feeds
                     </h2>
                     <p class="text-4xl font-extrabold text-center text-white">
-                        {{reportData.overall_stats.failed_feeds ?? 'N/A'}}
-
+                        {{ reportData.overall_stats.failed_feeds ?? "N/A" }}
                     </p>
                 </a>
             </div>
@@ -59,8 +57,7 @@
                         Total Products
                     </h2>
                     <p class="text-4xl font-extrabold text-center text-white">
-                        {{reportData.overall_stats.total_products ?? 'N/A'}}
-
+                        {{ reportData.overall_stats.total_products ?? "N/A" }}
                     </p>
                 </a>
             </div>
@@ -167,7 +164,11 @@
                                 color="cyan"
                                 @click="sync(feed.slug)"
                             />
-
+                            <OutlinedButton
+                                @click="editFeed(feed)"
+                                text="Edit"
+                                color="yellow"
+                            />
                             <OutlinedButton
                                 @click="viewFeed(feed.slug)"
                                 text="View"
@@ -286,79 +287,32 @@
                 </div>
             </div>
         </dialog>
-
-        <dialog
+        <FeedInfoModal
+            :feed="selectedFeed"
+            @close="closeFeedModal"
+            @detach-product="detachProduct"
+        />
+        <AddFeedDialog
             ref="addFeedDialog"
-            class="w-full max-w-md p-6 rounded-lg shadow-2xl bg-white overflow-hidden"
-        >
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">Add New Feed</h2>
-            <form @submit.prevent="handleAddFeedSubmit" class="space-y-4">
-                <div>
-                    <label
-                        for="feedName"
-                        class="block text-sm font-medium text-gray-700"
-                        >Feed Name</label
-                    >
-                    <input
-                        id="feedName"
-                        v-model="newFeedName"
-                        type="text"
-                        required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                    />
-                </div>
-                <div class="space-y-2">
-                    <label
-                        for="products"
-                        class="block text-sm font-semibold text-gray-700 dark:text-gray-300"
-                    >
-                        Select Products
-                    </label>
-                    <div class="relative">
-                        <select
-                            id="products"
-                            v-model="selectedProducts"
-                            multiple
-                            required
-                            class="w-full px-4 py-2 text-gray-700 bg-white border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-colors duration-200 ease-in-out"
-                        >
-                            <option
-                                v-for="product in products"
-                                :key="product.id"
-                                :value="product.id"
-                                class="py-2 px-4 hover:bg-gray-100 rounded-lg"
-                            >
-                                {{ product.name }}
-                            </option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button
-                        type="button"
-                        @click="closeAddFeedDialog"
-                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                    >
-                        Add Feed
-                    </button>
-                </div>
-            </form>
-        </dialog>
+            :products="products"
+            @add-feed="handleAddFeed"
+            @close="closeAddFeedDialog"
+        />
+        <UpdateFeedModal
+            :feed="selectedFeed"
+            @update="handleUpdateFeed"
+            @close="closeUpdateFeedModal"
+        />
     </div>
 </template>
-
 <script setup>
-import { onMounted, watch } from "vue";
+import { onMounted, ref } from "vue";
 import { useFeeds } from "../composables/feed";
 import { useProducts } from "../composables/product";
-import { ref } from "vue";
-import OutlinedButton from "../components/OutlinedButton.vue";
+import OutlinedButton from "../components/buttons/OutlinedButton.vue";
+import AddFeedDialog from "../components/feeds/AddFeedDialog.vue";
+import FeedInfoModal from "../components/feeds/FeedInfoModal.vue";
+import UpdateFeedModal from "../components/feeds/UpdateFeedModal.vue";
 
 const {
     feeds,
@@ -369,21 +323,22 @@ const {
     deleteFeed: deleteFeedComposable,
     getFeedWithProducts,
     addFeed,
+    updateFeed,
     detachProduct,
     fetchReportData,
     reportData,
 } = useFeeds();
 const { products, fetchProducts } = useProducts();
-const feedModal = ref(null);
+const feedInfoModal = ref(null);
 const selectedFeed = ref(null);
+const addFeedDialog = ref(null);
+const updateFeedModal = ref(null);
+
 onMounted(() => {
     fetchFeeds();
     fetchProducts();
     fetchReportData();
 });
-const addFeedDialog = ref(null);
-const newFeedName = ref("");
-const selectedProducts = ref([]);
 
 const formatDate = (date) => {
     return date ? new Date(date).toLocaleString() : "Never";
@@ -395,15 +350,22 @@ const sync = async (feedId) => {
 
 const viewFeed = async (feedId) => {
     selectedFeed.value = await getFeedWithProducts(feedId);
-    feedModal.value.showModal();
+    feedInfoModal.value.open();
 };
-
+const editFeed = (feed) => {
+    selectedFeed.value = feed;
+    updateFeedModal.value.open();
+};
 const closeFeedModal = () => {
-    feedModal.value.close();
     selectedFeed.value = null;
 };
+
 const openAddFeedDialog = () => {
-    addFeedDialog.value.showModal();
+    addFeedDialog.value.open();
+};
+
+const closeAddFeedDialog = () => {
+    addFeedDialog.value.close();
 };
 
 const deleteFeed = async (feedId) => {
@@ -412,15 +374,20 @@ const deleteFeed = async (feedId) => {
         await fetchFeeds();
     }
 };
-const closeAddFeedDialog = () => {
-    addFeedDialog.value.close();
-    newFeedName.value = "";
-    selectedProducts.value = [];
+
+const handleAddFeed = async ({ name, productIds }) => {
+    await addFeed(name, productIds);
+    await fetchFeeds();
 };
 
-const handleAddFeedSubmit = async () => {
-    await addFeed(newFeedName.value, selectedProducts.value);
+
+
+const closeUpdateFeedModal = () => {
+    selectedFeed.value = null;
+};
+
+const handleUpdateFeed = async ({ id, name }) => {
+    await updateFeed(id, name);
     await fetchFeeds();
-    closeAddFeedDialog();
 };
 </script>

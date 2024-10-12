@@ -18,6 +18,7 @@ class FeedService
         try {
             $feed = Feed::create([
                 'name' => $data['name'],
+                'user_id' => auth()->user()->id
             ]);
 
             if (isset($data['product_ids'])) {
@@ -109,6 +110,7 @@ class FeedService
 
     public function getReportData(): array
     {
+        
         return [
             'overall_stats' => $this->getOverallStats(),
         ];
@@ -116,13 +118,27 @@ class FeedService
 
     private function getOverallStats(): array
     {
-        return [
-            'total_feeds' => Feed::count(),
-            'synced_feeds' => Feed::where('status', FeedStatus::Synced)->count(),
-            'pending_feeds' => Feed::where('status', FeedStatus::Pending)->count(),
-            'failed_feeds' => Feed::where('status', FeedStatus::Failed)->count(),
-            'total_products' => Feed::withCount('products')->get()->sum('products_count'),
+        $userId = auth()->id();
+
+        $feedStats = Feed::where('user_id', $userId)
+            ->select('status')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $totalProducts = Product::whereHas('feed', function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })->count();
+
+            return [
+            'total_feeds' => array_sum($feedStats),
+            'synced_feeds' => $feedStats[FeedStatus::Synced->value] ?? 0,
+            'pending_feeds' => $feedStats[FeedStatus::Pending->value] ?? 0,
+            'failed_feeds' => $feedStats[FeedStatus::Failed->value] ?? 0,
+            'total_products' => $totalProducts,
         ];
     }
+
 
 }

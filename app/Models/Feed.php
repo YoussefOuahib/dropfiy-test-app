@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\FeedStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -13,7 +14,7 @@ class Feed extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug' ,'last_synced_at', 'status'];
+    protected $fillable = ['name', 'slug' , 'user_id' ,'last_synced_at', 'status'];
 
     protected $casts = [
         'last_synced_at' => 'datetime',
@@ -36,6 +37,9 @@ class Feed extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);
+    }
+    public function user(): BelongsTo{
+        return $this->belongsTo(User::class);
     }
     public function isPending(): bool
     {

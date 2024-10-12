@@ -11,14 +11,14 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('feeds', function (Blueprint $table) {
-            $table->string('slug')->unique()->after('name');
+            // $table->string('slug')->unique()->after('name');
         });
     }
 
     public function down()
     {
         Schema::table('feeds', function (Blueprint $table) {
-            $table->dropColumn('slug');
+            // $table->dropColumn(columns: 'slug');
         });
     }
 };

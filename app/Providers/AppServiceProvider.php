@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Interfaces\GoogleMerchantApiClientInterface;
+use App\Models\Feed;
+use App\Policies\FeedPolicy;
 use App\Services\GoogleMerchantApiClient;
+use Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::policy(Feed::class, FeedPolicy::class);
+
     }
 }
