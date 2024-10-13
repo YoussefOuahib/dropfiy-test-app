@@ -61,7 +61,6 @@ class FeedService
     {
         DB::beginTransaction();
         try {
-            // Detach all products first
             $feed->products()->detach();
             $feed->delete();
 
@@ -86,12 +85,6 @@ class FeedService
         $feed->products()->sync($validProductIds);
     }
 
-    public function needsSubmission(Feed $feed): bool
-    {
-        $submissionThreshold = config('google_merchant.submission_threshold', 24);
-        return $feed->last_submitted_at === null ||
-            $feed->last_submitted_at->lessThanOrEqualTo(now()->subHours($submissionThreshold));
-    }
     public function detachProduct(Feed $feed, int $productId): bool
     {
         try {

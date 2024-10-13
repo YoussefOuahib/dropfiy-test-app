@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Feed;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class FeedFactory extends Factory
 {
@@ -11,10 +12,11 @@ class FeedFactory extends Factory
 
     public function definition()
     {
+        $name = $this->faker->words(2, true) . ' Feed';
         return [
-            'name' => $this->faker->words(2, true) . ' Feed',
+            'name' => $name,
+            'slug' => Str::slug($name),
             'last_synced_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
-            'last_submitted_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
         ];
     }
 }
