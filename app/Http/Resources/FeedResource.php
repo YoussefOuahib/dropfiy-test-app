@@ -13,7 +13,11 @@ class FeedResource extends JsonResource
             'id' => $this->id,
             'slug' => $this->slug,
             'name' => $this->name,
-            'products' => ProductResource::collection($this->whenLoaded('products')),
+            'products' => ProductResource::collection($this->whenLoaded('products', function () {
+                return $this->products->filter(function ($product) {
+                    return $product->is_active;
+                });
+            })),
             'total_products' => $this->products()->count(),
             'last_synced_at' => $this->last_synced_at,
             'status' => $this->status,

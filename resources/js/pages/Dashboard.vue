@@ -67,7 +67,7 @@
             <OutlinedButton
                 text="Add Feed"
                 color="primary"
-                @click="openAddFeedDialog"
+                @click="showAddModal = true"
             />
         </div>
 
@@ -184,124 +184,24 @@
                 </tbody>
             </table>
         </div>
-        <dialog
-            ref="feedModal"
-            class="w-full max-w-4xl p-0 rounded-lg shadow-2xl bg-white overflow-hidden"
-        >
-            <div v-if="selectedFeed" class="flex flex-col h-full">
-                <!-- Modal Header -->
-                <div
-                    class="bg-gradient-to-r from-sky-600 to-cyan-600 p-6 text-white"
-                >
-                    <h2 class="text-3xl font-bold mb-2">
-                        {{ selectedFeed.name }}
-                    </h2>
-                    <div class="flex space-x-4 text-sm">
-                        <p>
-                            <span class="font-semibold">Total Products:</span>
-                            {{ selectedFeed.total_products }}
-                        </p>
-                        <p>
-                            <span class="font-semibold">Last Synced:</span>
-                            {{ formatDate(selectedFeed.last_synced_at) }}
-                        </p>
-                        <p>
-                            <span class="font-semibold">Status:</span>
-                            {{ selectedFeed.status }}
-                        </p>
-                    </div>
-                </div>
 
-                <!-- Products Table -->
-                <div class="flex-grow overflow-hidden">
-                    <h3
-                        class="text-xl font-semibold p-4 bg-gray-100 border-b border-gray-200"
-                    >
-                        Products
-                    </h3>
-                    <div class="overflow-y-auto max-h-[calc(100vh-20rem)]">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr
-                                    class="bg-gray-50 text-gray-600 uppercase text-xs"
-                                >
-                                    <th
-                                        class="sticky top-0 p-3 text-left bg-gray-50"
-                                    >
-                                        Name
-                                    </th>
-                                    <th
-                                        class="sticky top-0 p-3 text-left bg-gray-50"
-                                    >
-                                        SKU
-                                    </th>
-                                    <th
-                                        class="sticky top-0 p-3 text-left bg-gray-50"
-                                    >
-                                        Price
-                                    </th>
-                                    <th
-                                        class="sticky top-0 p-3 text-left bg-gray-50"
-                                    >
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="product in selectedFeed.products"
-                                    :key="product.id"
-                                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
-                                >
-                                    <td class="p-3">{{ product.name }}</td>
-                                    <td class="p-3 font-mono text-sm">
-                                        {{ product.sku }}
-                                    </td>
-                                    <td class="p-3">{{ product.price }}</td>
-                                    <td class="p-3">
-                                        <OutlinedButton
-                                            @click="
-                                                detachProduct(
-                                                    selectedFeed.slug,
-                                                    product.id
-                                                )
-                                            "
-                                            color="red"
-                                            text="Detach"
-                                        />
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Modal Footer -->
-                <div class="bg-gray-50 px-6 py-3 flex justify-end">
-                    <button
-                        @click="closeFeedModal"
-                        class="px-3 py-1 mx-2 font-semibold text-red-600 border-2 border-red-600 rounded-lg hover:text-white hover:bg-gradient-to-r hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-all duration-200 transform hover:scale-105"
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        </dialog>
         <FeedInfoModal
+            :show="showInfoModal"
             :feed="selectedFeed"
-            @close="closeFeedModal"
+            @close="showInfoModal = false"
             @detach-product="detachProduct"
         />
         <AddFeedDialog
-            ref="addFeedDialog"
+            :show="showAddModal"
+            @close="showAddModal = false"
             :products="products"
             @add-feed="handleAddFeed"
-            @close="closeAddFeedDialog"
         />
         <UpdateFeedModal
+            :show="showUpdateModal"
             :feed="selectedFeed"
+            @close="showUpdateModal = false"
             @update="handleUpdateFeed"
-            @close="closeUpdateFeedModal"
         />
     </div>
 </template>
@@ -329,11 +229,10 @@ const {
     reportData,
 } = useFeeds();
 const { products, fetchProducts } = useProducts();
-const feedInfoModal = ref(null);
 const selectedFeed = ref(null);
-const addFeedDialog = ref(null);
-const updateFeedModal = ref(null);
-
+const showInfoModal = ref(false);
+const showUpdateModal = ref(false);
+const showAddModal = ref(false);
 onMounted(() => {
     fetchFeeds();
     fetchProducts();
@@ -349,23 +248,13 @@ const sync = async (feedId) => {
 };
 
 const viewFeed = async (feedId) => {
+    showInfoModal.value = true;
     selectedFeed.value = await getFeedWithProducts(feedId);
-    feedInfoModal.value.open();
 };
 const editFeed = (feed) => {
     selectedFeed.value = feed;
-    updateFeedModal.value.open();
-};
-const closeFeedModal = () => {
-    selectedFeed.value = null;
-};
-
-const openAddFeedDialog = () => {
-    addFeedDialog.value.open();
-};
-
-const closeAddFeedDialog = () => {
-    addFeedDialog.value.close();
+    showUpdateModal.value = true;
+   
 };
 
 const deleteFeed = async (feedId) => {
@@ -381,13 +270,9 @@ const handleAddFeed = async ({ name, productIds }) => {
 };
 
 
-
-const closeUpdateFeedModal = () => {
-    selectedFeed.value = null;
-};
-
 const handleUpdateFeed = async ({ id, name }) => {
     await updateFeed(id, name);
+    showUpdateModal.value = true;
     await fetchFeeds();
 };
 </script>

@@ -19,7 +19,6 @@ class ProductFactory extends Factory
             'inventory' => $this->faker->numberBetween(0, 100),
             'is_active' => $this->faker->boolean,
             'last_synced_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
-            'sync_status' => $this->faker->randomElement(['pending', 'synced', 'failed']),
         ];
     }
 }

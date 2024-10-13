@@ -1,5 +1,6 @@
 <template>
-    <dialog ref="modal" class="w-full max-w-md p-6 rounded-lg shadow-2xl bg-white">
+      <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white w-full max-w-md p-6 rounded-lg shadow-2xl">
       <h2 class="text-2xl font-bold mb-4">Update Feed</h2>
       <form @submit.prevent="updateFeed">
         <div class="mb-4">
@@ -15,7 +16,7 @@
         <div class="flex justify-end space-x-2">
           <button
             type="button"
-            @click="close"
+            @click="closeModal"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Cancel
@@ -28,13 +29,15 @@
           </button>
         </div>
       </form>
-    </dialog>
+    </div>
+    </div>
   </template>
   
   <script setup>
   import { ref, watch } from 'vue';
   
   const props = defineProps({
+    show: Boolean,
     feed: {
       type: Object,
       required: true
@@ -43,7 +46,6 @@
   
   const emit = defineEmits(['update', 'close']);
   
-  const modal = ref(null);
   const updatedFeedName = ref('');
   
   watch(() => props.feed, (newFeed) => {
@@ -52,12 +54,9 @@
     }
   }, { immediate: true });
   
-  const open = () => {
-    modal.value.showModal();
-  };
+
   
-  const close = () => {
-    modal.value.close();
+  const closeModal = () => {
     emit('close');
   };
   
@@ -66,8 +65,7 @@
       id: props.feed.id,
       name: updatedFeedName.value
     });
-    close();
+    closeModal();
   };
   
-  defineExpose({ open });
   </script>

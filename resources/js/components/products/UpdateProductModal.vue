@@ -1,8 +1,6 @@
 <template>
-    <dialog
-      ref="dialog"
-      class="w-full max-w-md p-6 rounded-lg shadow-2xl bg-white overflow-hidden"
-    >
+  <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white w-full max-w-md p-6 rounded-lg shadow-2xl">
       <h2 class="text-2xl font-bold mb-4 text-gray-800">Update Product</h2>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
@@ -58,7 +56,7 @@
         <div class="flex justify-end space-x-2">
           <button
             type="button"
-            @click="close"
+            @click="closeModal"
             class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
           >
             Cancel
@@ -71,41 +69,35 @@
           </button>
         </div>
       </form>
-    </dialog>
-  </template>
-  
-  <script setup>
-  import { ref, watch } from 'vue';
-  
-  const props = defineProps({
-    product: {
-      type: Object,
-      required: true
-    }
-  });
-  
-  const dialog = ref(null);
-  const updatedProduct = ref({ ...props.product });
-  
-  watch(() => props.product, (newProduct) => {
-    updatedProduct.value = { ...newProduct };
-  });
-  
-  const emit = defineEmits(['update-product', 'close']);
-  
-  const open = () => {
-    dialog.value.showModal();
-  };
-  
-  const close = () => {
-    dialog.value.close();
-    emit('close');
-  };
-  
-  const handleSubmit = () => {
-    emit('update-product', updatedProduct.value);
-    close();
-  };
-  
-  defineExpose({ open, close });
-  </script>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, watch } from 'vue';
+
+const props = defineProps({
+  show: Boolean,
+  product: {
+    type: Object,
+    required: true
+  }
+});
+
+const updatedProduct = ref({ ...props.product });
+
+watch(() => props.product, (newProduct) => {
+  updatedProduct.value = { ...newProduct };
+});
+
+const emit = defineEmits(['update-product', 'close']);
+
+const handleSubmit = () => {
+  emit('update-product', props.product.id, updatedProduct.value);
+  closeModal();
+};
+
+const closeModal = () => {
+  emit('close');
+};
+</script>

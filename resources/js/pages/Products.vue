@@ -5,7 +5,7 @@
             <OutlinedButton
                 text="Add Product"
                 color="primary"
-                @click="openAddProductModal"
+                @click="showAddModal = true"
             />
         </div>
 
@@ -16,46 +16,12 @@
                 >
                     <tr>
                         <th
+                            v-for="header in tableHeaders"
+                            :key="header"
                             scope="col"
                             class="px-6 py-4 font-semibold tracking-wider"
                         >
-                            Product name
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 font-semibold tracking-wider"
-                        >
-                            SKU
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 font-semibold tracking-wider"
-                        >
-                            Price
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 font-semibold tracking-wider"
-                        >
-                            Inventory
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 font-semibold tracking-wider"
-                        >
-                            Status
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 font-semibold tracking-wider"
-                        >
-                            Last Synced
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 font-semibold tracking-wider"
-                        >
-                            Actions
+                            {{ header }}
                         </th>
                     </tr>
                 </thead>
@@ -97,53 +63,41 @@
                         </td>
                         <td class="px-6 py-4 d-flex text-center">
                             <OutlinedButton
-                                text="Sync"
-                                color="cyan"
-                                @click="syncProduct(product.id)"
-                            />
-                            <OutlinedButton
-                                @click="viewProduct(product.id)"
-                                text="View"
-                                color="green"
-                            />
-                            <OutlinedButton
-                                @click="editProduct(product)"
-                                text="Edit"
-                                color="blue"
-                            />
-                            <OutlinedButton
-                                @click="deleteProduct(product.id)"
-                                text="Delete"
-                                color="red"
+                                v-for="action in actions"
+                                :key="action.text"
+                                :text="action.text"
+                                :color="action.color"
+                                @click="action.handler(product)"
                             />
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        <AddProductModal
+            :show="showAddModal"
+            @close="showAddModal = false"
+            @add-product="handleAddProduct"
+        />
+
         <ProductInfoModal
-            ref="productInfoModal"
+            :show="showInfoModal"
             :product="selectedProduct"
-            @close="closeProductInfoModal"
+            @close="showInfoModal = false"
             @detach-feed="handleDetachFeed"
         />
-        <AddProductModal
-            ref="addProductModal"
-            @add-product="handleAddProduct"
-            @close="closeAddProductModal"
-        />
+
         <UpdateProductModal
-            ref="updateProductModal"
+            :show="showUpdateModal"
             :product="selectedProduct"
+            @close="showUpdateModal = false"
             @update-product="handleUpdateProduct"
-            @close="closeUpdateProductModal"
         />
     </div>
 </template>
 
-
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useProducts } from "../composables/product";
 import OutlinedButton from "../components/buttons/OutlinedButton.vue";
 import AddProductModal from "../components/products/AddProductModal.vue";
@@ -162,54 +116,38 @@ const {
     updateProduct,
     detachFeed,
 } = useProducts();
-const addProductModal = ref(null);
-const productInfoModal = ref(null);
-const updateProductModal = ref(null);
+
+const showAddModal = ref(false);
+const showInfoModal = ref(false);
+const showUpdateModal = ref(false);
 const selectedProduct = ref(null);
 
-onMounted(() => {
-    fetchProducts();
-});
+onMounted(fetchProducts);
 
-const formatDate = (date) => {
-    return date ? new Date(date).toLocaleString() : "Never";
-};
+const formatDate = (date) => (date ? new Date(date).toLocaleString() : "Never");
 
 const syncProduct = async (productId) => {
     await syncProductComposable(productId);
     await fetchProducts();
 };
 
-const openAddProductModal = () => {
-    addProductModal.value.open();
-};
-
-const closeAddProductModal = () => {
-    addProductModal.value.close();
-};
-const viewProduct = async (productId) => {
-    selectedProduct.value = await getProductWithFeeds(productId);
-    productInfoModal.value.open();
-};
-
-const closeProductInfoModal = () => {
-    productInfoModal.value.close();
-    selectedProduct.value = null;
+const viewProduct = async (product) => {
+    showInfoModal.value = true;
+    selectedProduct.value = await getProductWithFeeds(product.id);
 };
 
 const editProduct = (product) => {
+    showUpdateModal.value = true;
     selectedProduct.value = product;
-    updateProductModal.value.open();
 };
 
 const closeUpdateProductModal = () => {
-    updateProductModal.value.close();
     selectedProduct.value = null;
 };
 
-const deleteProduct = async (productId) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-        await deleteProductComposable(productId);
+const deleteProduct = async (product) => {
+    if (confirm(`Are you sure you want to delete ${product.name}?`)) {
+        await deleteProductComposable(product.id);
         await fetchProducts();
     }
 };
@@ -217,6 +155,7 @@ const deleteProduct = async (productId) => {
 const handleAddProduct = async (newProduct) => {
     await addProduct(newProduct);
     await fetchProducts();
+    showAddModal.value = false;
 };
 
 const handleUpdateProduct = async (productId, updatedProduct) => {
@@ -225,8 +164,29 @@ const handleUpdateProduct = async (productId, updatedProduct) => {
     closeUpdateProductModal();
 };
 
-const handleDetachFeed = async (productId, feedSlug) => {
-    await detachFeed(productId, feedSlug);
+const handleDetachFeed = async (productId, feedId) => {
+    await detachFeed(productId, feedId);
     selectedProduct.value = await getProductWithFeeds(productId);
 };
+
+const tableHeaders = [
+    "Product name",
+    "SKU",
+    "Price",
+    "Inventory",
+    "Status",
+    "Last Synced",
+    "Actions",
+];
+
+const actions = computed(() => [
+    {
+        text: "Sync",
+        color: "cyan",
+        handler: (product) => syncProduct(product.id),
+    },
+    { text: "View", color: "green", handler: viewProduct },
+    { text: "Edit", color: "blue", handler: editProduct },
+    { text: "Delete", color: "red", handler: deleteProduct },
+]);
 </script>

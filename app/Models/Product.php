@@ -19,7 +19,6 @@ class Product extends Model
         'inventory',
         'is_active',
         'last_synced_at',
-        'sync_status'
     ];
     protected $casts = [
         'price' => 'decimal:2',
