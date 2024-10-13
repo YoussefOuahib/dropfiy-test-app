@@ -24,7 +24,7 @@ class GoogleMerchantService
             Log::info("Submitting feed for feed ID: {$feed->id}");
             $feedContent = $this->generateFeedContent($feed);
             $response = $this->apiClient->submitProductFeed();
-            
+
             if ($response->getStatusCode() === 200) {
                 $feed->markAsSynced();
                 Log::info("Feed submitted successfully for feed ID: {$feed->id}");
@@ -52,14 +52,14 @@ class GoogleMerchantService
         }
     }
 
-    
+
 
     public function checkFeedStatus(Feed $feed): array
     {
         try {
             Log::info("Checking feed status for feed ID: {$feed->id}");
             $response = $this->apiClient->getFeedStatus($feed->id);
-            
+
             if ($response['success']) {
                 $this->updateFeedStatus($feed, $response['data']);
                 Log::info("Feed status updated for feed ID: {$feed->id}");
@@ -79,11 +79,11 @@ class GoogleMerchantService
         try {
             Log::info("Starting product sync for feed ID: {$feed->id}");
             $products = $this->getProductsForFeed($feed);
-            
+
             foreach ($products as $product) {
                 $this->syncProduct($product);
             }
-            
+
             $feed->markAsSynced();
             DB::commit();
             Log::info("Products synced successfully for feed ID: {$feed->id}");
@@ -119,15 +119,18 @@ class GoogleMerchantService
         })->toArray();
     }
 
-    private function syncProduct(Product $product): void
+    public function syncProduct(Product $product): void
     {
         try {
             $product->update([
-                'sync_status' => 'synced',
+                'is_active' => true,
                 'last_synced_at' => now(),
             ]);
             Log::info("Product synced: {$product->id}");
         } catch (\Exception $e) {
+            $product->update([
+                'is_active' => false,
+            ]);
             Log::error("Failed to sync product {$product->id}: " . $e->getMessage());
             throw $e;
         }

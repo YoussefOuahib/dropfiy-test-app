@@ -9,7 +9,8 @@ class UserSetting extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'google_merchant_id', 'api_key'];
+    protected $fillable = ['user_id', 'sync_time', 'currency'];
+    protected $dates = ['last_auto_synced_at'];
 
     public function user()
     {

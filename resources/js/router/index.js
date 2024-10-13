@@ -2,7 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from '../composables/auth.js';
 import AuthenticatedLayout from '../layouts/AuthenticatedLayout.vue';
 import Dashboard from '../pages/Dashboard.vue';
+import Settings from '../pages/Settings.vue';
 import Login from '../pages/Login.vue';
+import Products from '../pages/Products.vue';
 
 const routes = [
   {
@@ -14,6 +16,16 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: Dashboard,
+      },
+      {
+        path: 'settings',
+        name: 'Settings',
+        component: Settings,
+      },
+      {
+        path: 'products',
+        name: 'Products',
+        component: Products,
       },
     ]
   },

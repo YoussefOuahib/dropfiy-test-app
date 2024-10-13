@@ -76,13 +76,13 @@ class ProductService
         try {
             $this->googleMerchantService->syncProduct($product);
             $product->update([
-                'sync_status' => 'synced',
                 'last_synced_at' => now(),
+                'is_active' => true,
             ]);
             Log::info("Product synced successfully", ['product_id' => $product->id]);
         } catch (\Exception $e) {
             Log::error("Failed to sync product", ['product_id' => $product->id, 'error' => $e->getMessage()]);
-            $product->update(['sync_status' => 'failed']);
+            $product->update(['is_active' => false]);
             throw new \Exception("Failed to sync product: " . $e->getMessage());
         }
     }
