@@ -4,6 +4,7 @@ import AuthenticatedLayout from '../layouts/AuthenticatedLayout.vue';
 import Dashboard from '../pages/Dashboard.vue';
 import Settings from '../pages/Settings.vue';
 import Login from '../pages/Login.vue';
+import Register from '../pages/Register.vue';
 import Products from '../pages/Products.vue';
 
 const routes = [
@@ -33,6 +34,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login
+  },
+  {
+    path: '/Register',
+    name: 'Register',
+    component: Register
   },
 ];
 

@@ -18,21 +18,31 @@ class ProductService
 
     public function createProduct(array $data): Product
     {
+
         DB::beginTransaction();
+
         try {
-            $product = Product::create($data);
-            
-            if (isset($data['feed_ids'])) {
-                $product->feed()->sync($data['feed_ids']);
-            }
+            $product = $this->saveProduct($data);
+            $this->syncFeeds($product, $data['feed_ids'] ?? []);
 
             DB::commit();
-            Log::info("Product created successfully", ['product_id' => $product->id]);
-            return $product;
+            return $product->fresh();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Failed to create product", ['error' => $e->getMessage()]);
-            throw new \Exception("Failed to create product: " . $e->getMessage());
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+
+    private function saveProduct(array $data): Product
+    {
+        return Product::create(array_merge($data, ['user_id' => auth()->user()->id]));
+    }
+
+    private function syncFeeds(Product $product, array $feedIds): void
+    {
+        if (!empty($feedIds)) {
+            $product->feed()->sync($feedIds);
         }
     }
 
@@ -92,7 +102,7 @@ class ProductService
         return Product::whereHas('feed', function ($query) use ($feedId) {
             $query->where('feed_id', $feedId);
         })
-        ->where('is_active', true)
-        ->get();
+            ->where('is_active', true)
+            ->get();
     }
 }

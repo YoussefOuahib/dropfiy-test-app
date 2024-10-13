@@ -10,6 +10,8 @@ export const useAuth = () => {
     }
     const email = ref('')
     const password = ref('')
+    const password_confirmation = ref('') // Added password confirmation for registration
+    const name = ref('') // Added name for registration
     const error = ref('')
     const isLoading = ref(false)
 
@@ -18,30 +20,50 @@ export const useAuth = () => {
         isLoading.value = true;
 
         try {
-            // Get CSRF cookie
             await axios.get("/sanctum/csrf-cookie");
 
-            // Attempt login
             await axios.post("/login", {
                 email: email.value,
                 password: password.value,
             });
 
-            // If successful, redirect to dashboard
             setAuthStatus(true);
-            window.location.href = "/dashboard"
+            window.location.href = "/dashboard";
         } catch (e) {
-            if (e.response && e.response.data && e.response.data.errors) {
-                // Handle validation errors
-                error.value = Object.values(e.response.data.errors)
-                    .flat()
-                    .join(" ");
-            } else if (e.response && e.response.data && e.response.data.message) {
-                // Handle other API errors
+            if (e.response?.data?.errors) {
+                error.value = Object.values(e.response.data.errors).flat().join(" ");
+            } else if (e.response?.data?.message) {
                 error.value = e.response.data.message;
             } else {
-                // Handle unexpected errors
                 error.value = "An unexpected error occurred. Please try again.";
+            }
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const register = async () => {
+        error.value = "";
+        isLoading.value = true;
+        try {
+            await axios.get("/sanctum/csrf-cookie");
+
+            await axios.post("/register", {
+                name: name.value,
+                email: email.value,
+                password: password.value,
+                password_confirmation: password_confirmation.value,
+            });
+
+            setAuthStatus(true);
+            window.location.href = "/dashboard";
+        } catch (e) {
+            if (e.response?.data?.errors) {
+                error.value = Object.values(e.response.data.errors).flat().join(" ");
+            } else if (e.response?.data?.message) {
+                error.value = e.response.data.message;
+            } else {
+                error.value = "Registration failed. Please try again.";
             }
         } finally {
             isLoading.value = false;
@@ -50,37 +72,41 @@ export const useAuth = () => {
 
     const logout = async () => {
         try {
-            await axios.post('/api/logout')
-            setAuthStatus(false)
+            await axios.post('/api/logout');
+            setAuthStatus(false);
         } catch (error) {
-            console.error('Logout failed:', error)
-            throw error
+            console.error('Logout failed:', error);
         }
-    }
+    };
 
     const checkAuthStatus = async () => {
         try {
-            const response = await axios.get('/api/user')
+            const response = await axios.get('/api/user');
             if (response.status === 200) {
-                setAuthStatus(true)
-                return true
+                setAuthStatus(true);
+                return true;
             }
         } catch (error) {
             if (error.response && error.response.status === 401) {
-                setAuthStatus(false)
+                setAuthStatus(false);
             } else {
-                console.error('Error checking auth status:', error)
+                console.error('Error checking auth status:', error);
             }
         }
-        return false
-    }
+        return false;
+    };
 
     return {
         isAuthenticated: readonly(isAuthenticated),
         login,
+        register,
+        name,
         email,
         password,
+        password_confirmation,
+        error,
+        isLoading,
         logout,
-        checkAuthStatus
-    }
-}
+        checkAuthStatus,
+    };
+};

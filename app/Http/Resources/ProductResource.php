@@ -14,11 +14,13 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $user = auth()->user(); // Assuming the user is authenticated
+        $currency = $user->currency ?? 'USD';
         return [
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'price' => $this->price,
+            'price' => $this->price . ' ' . $currency,
             'sku' => $this->sku,
             'inventory' => $this->inventory,
             'is_active' => $this->is_active,

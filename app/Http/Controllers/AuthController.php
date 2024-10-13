@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegisterRequest;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -10,23 +12,34 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = DB::transaction(function () use ($request) {
+            $user = $this->createUser($request->validated());
+            $this->createUserSettings($user);
+            return $user;
+        });
 
         Auth::login($user);
 
-        return response()->json(['user' => $user]);
+        return response()->json(['user' => $user->load('userSetting')], 201);
+    }
+
+    private function createUser(array $data): User
+    {
+        return User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+    }
+
+    private function createUserSettings(User $user): void
+    {
+        $user->userSetting()->create([
+            'currency' => 'USD',
+            'sync_time' => 120,
+        ]);
     }
 
     public function login(Request $request)

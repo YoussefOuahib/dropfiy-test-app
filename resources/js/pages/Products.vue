@@ -1,5 +1,26 @@
 <template>
     <div class="p-6 bg-gradient-to-r from-cyan-50 to-sky-50">
+        <div
+            v-if="products.length === 0"
+            class="flex justify-center items-center h-64"
+        >
+            <div
+                class="text-center p-10 bg-white rounded-lg shadow-lg border border-gray-200"
+            >
+                <h2 class="text-3xl font-bold text-sky-600 mb-4">
+                    You have no products yet
+                </h2>
+                <p class="text-lg text-gray-500 mb-6">
+                    Start by adding your first product to see your data here.
+                </p>
+                <OutlinedButton
+                    text="Add Product"
+                    color="primary"
+                    @click="showAddModal = true"
+                />
+            </div>
+        </div>
+        <template v-else>
         <div class="mb-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-sky-800">Products</h1>
             <OutlinedButton
@@ -74,6 +95,7 @@
                 </tbody>
             </table>
         </div>
+        </template>
         <AddProductModal
             :show="showAddModal"
             @close="showAddModal = false"
@@ -93,6 +115,12 @@
             @close="showUpdateModal = false"
             @update-product="handleUpdateProduct"
         />
+
+        <ErrorModal 
+      :show="showErrorModal"
+      :message="error"
+      @close="closeErrorModal"
+    />
     </div>
 </template>
 
@@ -103,18 +131,20 @@ import OutlinedButton from "../components/buttons/OutlinedButton.vue";
 import AddProductModal from "../components/products/AddProductModal.vue";
 import ProductInfoModal from "../components/products/ProductInfoModal.vue";
 import UpdateProductModal from "../components/products/UpdateProductModal.vue";
-
+import ErrorModal from "../components/modals/ErrorModal.vue";
 const {
-    products,
-    loading,
-    error,
-    fetchProducts,
-    syncProduct: syncProductComposable,
-    deleteProduct: deleteProductComposable,
-    getProductWithFeeds,
-    addProduct,
-    updateProduct,
-    detachFeed,
+  products,
+  loading,
+  error,
+  showErrorModal,
+  fetchProducts,
+  syncProduct: syncProductComposable,
+  deleteProduct: deleteProductComposable,
+  getProductWithFeeds,
+  addProduct,
+  updateProduct,
+  detachFeed,
+  closeErrorModal
 } = useProducts();
 
 const showAddModal = ref(false);

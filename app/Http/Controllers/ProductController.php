@@ -43,7 +43,7 @@ class ProductController extends Controller
 
     public function store(CreateProductRequest $request): JsonResponse
     {
-        Gate::authorize('store', Product::class);
+        Gate::authorize('create', Product::class);
         try {
             $product = $this->productService->createProduct($request->validated());
             return $this->respondWithProduct($product, 'Product created successfully');

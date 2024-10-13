@@ -6,10 +6,6 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserSettingController;
 use Illuminate\Support\Facades\Route;
 
-// Public routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-
 // Sanctum authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
 

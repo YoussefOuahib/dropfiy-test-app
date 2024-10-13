@@ -6,6 +6,7 @@ export function useProducts() {
   const loading = ref(false)
   const error = ref(null)
   const currentProduct = ref(null)
+  const showErrorModal = ref(false)
 
   const fetchProducts = async () => {
     loading.value = true
@@ -13,8 +14,7 @@ export function useProducts() {
       const response = await axios.get('/api/products')
       products.value = response.data.data
     } catch (e) {
-      error.value = 'Failed to fetch products'
-      console.error(e)
+      showError('Failed to fetch products')
     } finally {
       loading.value = false
     }
@@ -27,8 +27,8 @@ export function useProducts() {
       await fetchProducts()
       return response.data.data
     } catch (e) {
-      error.value = 'Failed to add product'
-      console.error(e)
+      showError(e.response?.data?.message || 'Failed to add product')
+      return null
     } finally {
       loading.value = false
     }
@@ -40,8 +40,7 @@ export function useProducts() {
       await axios.post(`/api/products/${productId}/sync`)
       await fetchProducts()
     } catch (e) {
-      error.value = 'Failed to sync product'
-      console.error(e)
+      showError('Failed to sync product')
     } finally {
       loading.value = false
     }
@@ -49,27 +48,25 @@ export function useProducts() {
 
   const updateProduct = async (product) => {
     loading.value = true
-    error.value = null;
     try {
       const response = await axios.put(`/api/products/${product.id}`, product)
       if (response.data.success) {
         const updatedProduct = response.data.data
-        const productIndex = products.value.findIndex(product => product.id === productId)
+        const productIndex = products.value.findIndex(p => p.id === product.id)
         if (productIndex !== -1) {
           products.value[productIndex] = updatedProduct
           products.value = [...products.value] // Trigger reactivity
         }
-        if (currentProduct.value && currentProduct.value.id === productId) {
+        if (currentProduct.value && currentProduct.value.id === product.id) {
           currentProduct.value = updatedProduct
         }
         return updatedProduct
       } else {
-        error.value = response.data.message
+        showError(response.data.message)
         return null
       }
     } catch (e) {
-      error.value = e.response?.data?.message || 'Failed to update product'
-      console.error(e)
+      showError(e.response?.data?.message || 'Failed to update product')
       return null
     } finally {
       loading.value = false
@@ -82,8 +79,7 @@ export function useProducts() {
       await axios.delete(`/api/products/${productId}`)
       await fetchProducts()
     } catch (e) {
-      error.value = 'Failed to delete product'
-      console.error(e)
+      showError('Failed to delete product')
     } finally {
       loading.value = false
     }
@@ -96,8 +92,8 @@ export function useProducts() {
       currentProduct.value = response.data.data
       return currentProduct.value
     } catch (e) {
-      error.value = 'Failed to fetch product details'
-      console.error(e)
+      showError('Failed to fetch product details')
+      return null
     } finally {
       loading.value = false
     }
@@ -108,16 +104,24 @@ export function useProducts() {
     try {
       await axios.post(`/api/products/${productId}/detach-feed`, { feed_id: feedId })
       if (currentProduct.value && currentProduct.value.id === productId) {
-        // Update the current product's feeds if it's the one we're viewing
         currentProduct.value.feeds = currentProduct.value.feeds.filter(feed => feed.id !== feedId)
       }
       await fetchProducts()
     } catch (e) {
-      error.value = 'Failed to detach feed from product'
-      console.error(e)
+      showError('Failed to detach feed from product')
     } finally {
       loading.value = false
     }
+  }
+
+  const showError = (message) => {
+    error.value = message
+    showErrorModal.value = true
+  }
+
+  const closeErrorModal = () => {
+    showErrorModal.value = false
+    error.value = null
   }
 
   return {
@@ -125,12 +129,14 @@ export function useProducts() {
     loading,
     error,
     currentProduct,
+    showErrorModal,
     updateProduct,
     fetchProducts,
     addProduct,
     syncProduct,
     deleteProduct,
     getProductWithFeeds,
-    detachFeed
+    detachFeed,
+    closeErrorModal
   }
 }
